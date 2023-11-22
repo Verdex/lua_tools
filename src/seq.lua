@@ -62,6 +62,14 @@ local function skip(self, num)
     return self
 end
 
+local function eval(self) 
+    local t = {}
+    for i in self:iter() do
+        t[#t+1] = i
+    end
+    return t
+end
+
 local function iter(self)
     return self.c
 end
@@ -70,8 +78,8 @@ local function create(t)
     assert(t ~= nil)
 
     local c = coroutine.wrap(function () 
-        for i in ipairs(t) do
-            coroutine.yield(i)
+        for _, v in ipairs(t) do
+            coroutine.yield(v)
         end
     end)
 
@@ -82,6 +90,7 @@ local function create(t)
            , filter = filter
            , take = take
            , skip = skip
+           , eval = eval
            }
 end
 
@@ -91,20 +100,20 @@ end
 -- reduce
 -- flatten
 -- zip
--- clone
 
 
-local x = {1, 2, 3, 4, 5, 6, 7}
+local x = {11, 22, 33, 44, 55, 66, 77}
 
 local z = create(x)
 
-z:map(function(y) return y + 1 end)
+local output = z:map(function(y) return y + 1 end)
  :map(function(y) return y + 1 end)
  :map(function(y) return y + 1 end)
  :filter(function(y) return y % 2 == 0 end)
  :take(3)
  :skip(1)
+ :eval()
 
-for i in z:iter() do
-    print(i)
+for _, v in ipairs(output) do
+    print(v)
 end
