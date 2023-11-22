@@ -62,6 +62,17 @@ local function skip(self, num)
     return self
 end
 
+local function reduce(self, f, start)
+    assert(f ~= nil and start ~= nil)
+
+    local sum = start
+    for i in self:iter() do
+        start = f(sum, i)
+    end
+
+    return sum
+end
+
 local function eval(self) 
     local t = {}
     for i in self:iter() do
@@ -82,6 +93,7 @@ local function create(c)
            , filter = filter
            , take = take
            , skip = skip
+           , reduce = reduce
            , eval = eval
            }
 end
@@ -137,9 +149,6 @@ local function from_repeat(f, r)
 
     return create(c) 
 end
-
--- reduce
--- zip
 
 
 local x = {11, 22, 33, 44, 55, 66, 77}
