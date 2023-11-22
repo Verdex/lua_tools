@@ -150,6 +150,11 @@ local function from_repeat(r)
     return create(c) 
 end
 
+return { from_repeat = from_repeat
+       , from_previous = from_previous
+       , from_list = from_list
+       , from_index = from_index
+       }
 
 --[[
 local x = {11, 22, 33, 44, 55, 66, 77}
