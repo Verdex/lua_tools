@@ -151,6 +151,7 @@ local function from_repeat(r)
 end
 
 
+--[[
 local x = {11, 22, 33, 44, 55, 66, 77}
 
 local z = from_list(x)
@@ -170,3 +171,4 @@ end
 output = from_previous(function(x) return x + 7 end, 8):take(100):reduce(function(a, b) return a + b end, 0)
 
 print(output)
+--]]
