@@ -5,17 +5,33 @@ local function capture(name)
 end
 
 local function is_capture(t)
-    return type(t) == "table" 
-       and t.type == "pattern" 
-       and t.kind == "capture"
+    return t.kind == "capture"
+end
+
+local function wild() 
+    return {type = "pattern", kind = "wild"}
+end
+
+local function is_wild(t)
+    return t.kind == "wild"
 end
 
 local function match(pattern, data)
+    assert(type(pattern) ~= "table" or pattern.type == "pattern")
     return coroutine.wrap(function() 
-        if is_capture(pattern) then
-            coroutine.yield(pattern.name, data)
-        elseif type(pattern) ~= "table" then
+        if type(pattern) ~= "table" then
             coroutine.yield(pattern == data, data)
+        elseif is_capture(pattern) then
+            coroutine.yield(pattern.name, data)
+        elseif is_wild(pattern) then
+            coroutine.yield(true, data)
+        -- table
+        -- path
+        -- list path
+        -- and/or ?
+        -- template ?
+        -- pattern function ?
+        -- matcher function ?
         end
     end)
 end
@@ -68,5 +84,11 @@ r = match("ystring", "xstring")
 a, b = r()
 assert(not a)
 assert(b == "xstring")
+
+-- should match wild
+r = match(wild(), { x = 1})
+a, b = r()
+assert(a)
+assert(b.x == 1)
 
 print("ok")
