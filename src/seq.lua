@@ -67,7 +67,7 @@ local function reduce(self, f, start)
 
     local sum = start
     for i in self:iter() do
-        start = f(sum, i)
+        sum = f(sum, i)
     end
 
     return sum
@@ -138,8 +138,8 @@ local function from_previous(f, start)
     return create(c) 
 end
 
-local function from_repeat(f, r) 
-    assert(f ~= nil and r ~= nil)
+local function from_repeat(r) 
+    assert(r ~= nil)
 
     local c = coroutine.wrap(function () 
         while true do
@@ -166,3 +166,7 @@ local output = z:map(function(y) return y + 1 end)
 for _, v in ipairs(output) do
     print(v)
 end
+
+output = from_previous(function(x) return x + 7 end, 8):take(100):reduce(function(a, b) return a + b end, 0)
+
+print(output)
