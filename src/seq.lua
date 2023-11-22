@@ -13,6 +13,55 @@ local function map(self, f)
     return self
 end
 
+local function filter(self, p)
+    assert(p ~= nil)
+
+    local c = self.c
+    self.c = coroutine.wrap(function() 
+        for i in c do
+            if p(i) then
+                coroutine.yield(i)
+            end
+        end
+    end)
+
+    return self
+end
+
+local function take(self, num)
+    assert(num >= 0)
+
+    local c = self.c
+    self.c = coroutine.wrap(function() 
+        for i in c do
+            if num < 1 then 
+                break
+            end
+            num = num - 1
+            coroutine.yield(i)
+        end
+    end)
+
+    return self
+end
+
+local function skip(self, num)
+    assert(num >= 0)
+
+    local c = self.c
+    self.c = coroutine.wrap(function() 
+        for i in c do
+            if num <= 0 then 
+                coroutine.yield(i)
+            else
+                num = num - 1
+            end
+        end
+    end)
+
+    return self
+end
+
 local function iter(self)
     return self.c
 end
@@ -30,24 +79,31 @@ local function create(t)
            , c = c
            , iter = iter
            , map = map 
+           , filter = filter
+           , take = take
+           , skip = skip
            }
 end
 
 
 -- forever
--- take
--- filter
+-- repeat
 -- reduce
 -- flatten
+-- zip
+-- clone
 
 
-local x = {1, 2, 3, 4}
+local x = {1, 2, 3, 4, 5, 6, 7}
 
 local z = create(x)
 
 z:map(function(y) return y + 1 end)
  :map(function(y) return y + 1 end)
  :map(function(y) return y + 1 end)
+ :filter(function(y) return y % 2 == 0 end)
+ :take(3)
+ :skip(1)
 
 for i in z:iter() do
     print(i)
