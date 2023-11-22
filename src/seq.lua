@@ -74,15 +74,7 @@ local function iter(self)
     return self.c
 end
 
-local function create(t) 
-    assert(t ~= nil)
-
-    local c = coroutine.wrap(function () 
-        for _, v in ipairs(t) do
-            coroutine.yield(v)
-        end
-    end)
-
+local function create(c)
     return { type = "seq"
            , c = c
            , iter = iter
@@ -94,17 +86,65 @@ local function create(t)
            }
 end
 
+local function from_list(t) 
+    assert(t ~= nil)
 
--- forever
--- repeat
+    local c = coroutine.wrap(function () 
+        for _, v in ipairs(t) do
+            coroutine.yield(v)
+        end
+    end)
+
+    return create(c) 
+end
+
+local function from_index(f, start) 
+    assert(f ~= nil)
+    start = start or 1
+
+    local c = coroutine.wrap(function () 
+        while true do
+            coroutine.yield(f(start))
+            start = start + 1
+        end
+    end)
+
+    return create(c) 
+end
+
+local function from_previous(f, start) 
+    assert(f ~= nil and start ~= nil)
+
+    local c = coroutine.wrap(function () 
+        local prev = start
+        while true do
+            prev = f(prev)
+            coroutine.yield(prev)
+        end
+    end)
+
+    return create(c) 
+end
+
+local function from_repeat(f, r) 
+    assert(f ~= nil and r ~= nil)
+
+    local c = coroutine.wrap(function () 
+        while true do
+            coroutine.yield(r)
+        end
+    end)
+
+    return create(c) 
+end
+
 -- reduce
--- flatten
 -- zip
 
 
 local x = {11, 22, 33, 44, 55, 66, 77}
 
-local z = create(x)
+local z = from_list(x)
 
 local output = z:map(function(y) return y + 1 end)
  :map(function(y) return y + 1 end)
