@@ -10,53 +10,23 @@ local function to_dict(t)
     return ret
 end
 
-local function capture(name)
-    return {name = name, type = "pattern", kind = "capture"}
-end
+local function capture(name) return {name = name, type = "pattern", kind = "capture"} end
+local function is_capture(t) return t.kind == "capture" end
 
-local function is_capture(t)
-    return t.kind == "capture"
-end
+local function wild() return {type = "pattern", kind = "wild"} end
+local function is_wild(t) return t.kind == "wild" end
 
-local function wild() 
-    return {type = "pattern", kind = "wild"}
-end
+local function exact(t) return {table = t, type = "pattern", kind = "exact"} end
+local function is_exact(t) return t.kind == "exact" end
 
-local function is_wild(t)
-    return t.kind == "wild"
-end
+local function list_path(t) return {table = t, type = "pattern", kind = "list_path"} end
+local function is_list_path(t) return t.kind == "list_path" end
 
-local function exact(t)
-    return {table = t, type = "pattern", kind = "exact"}
-end
+local function path(t) return {table = t, type = "pattern", kind = "path"} end
+local function is_path(t) return t.kind == "path" end
 
-local function is_exact(t) 
-    return t.kind == "exact"
-end
-
-local function list_path(t)
-    return {table = t, type = "pattern", kind = "list_path"}
-end
-
-local function is_list_path(t) 
-    return t.kind == "list_path"
-end
-
-local function path(t) 
-    return {table = t, type = "pattern", kind = "path"}
-end
-
-local function is_path(t)
-    return t.kind == "path"
-end
-
-local function pnext()
-    return {type = "pattern", kind = "pnext"}
-end
-
-local function is_pnext(t)
-    return t.kind == "pnext"
-end
+local function pnext() return {type = "pattern", kind = "pnext"} end
+local function is_pnext(t) return t.kind == "pnext" end
 
 local function merge(t1, t2)
     local r = {}
