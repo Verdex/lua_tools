@@ -135,9 +135,13 @@ local function match_path(m, ps, data, index, results)
                 return false
             end
             local nexts, normal = split_pnext(output)
-            for _, v in ipairs(nexts) do
-                if not match_path(m, ps, v[2], index + 1, merge(results, normal)) then
-                    return false
+            if #nexts == 0 then 
+                coroutine.yield(merge(results, normal))
+            else
+                for _, v in ipairs(nexts) do
+                    if not match_path(m, ps, v[2], index + 1, merge(results, normal)) then
+                        return false
+                    end
                 end
             end
         end
@@ -358,7 +362,6 @@ r = match(list_path { capture 'x', 2, 3}, { 1 })
 o = r()
 assert(not o)
 
-print"START"
 -- should match path
 r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
               , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
@@ -367,8 +370,43 @@ r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
            { 1, {10, 20, 0, 30, 40}, 0, {100, 200, 0, 300, 400}, 2 })
 
 o = r()
-display.pp(o)
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 10)
+assert(o.b == 20)
+assert(o.i == 30)
 
+o = r()
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 10)
+assert(o.b == 20)
+assert(o.i == 40)
+
+o = r()
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 100)
+assert(o.b == 200)
+assert(o.i == 300)
+
+o = r()
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 100)
+assert(o.b == 200)
+assert(o.i == 400)
+
+o = r()
+assert(not o)
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
 -- TODO exact_table => exact
