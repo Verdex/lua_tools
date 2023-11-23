@@ -160,6 +160,7 @@ local function match(pattern, data)
     end)
 end
 
+---[[
 
 -- should capture
 r = match(capture 'x', 40)
@@ -527,6 +528,8 @@ assert(o.x == 6)
 
 o = r()
 assert(not o)
+
+--]]
 
 return { to_dict = to_dict
        , capture = capture
