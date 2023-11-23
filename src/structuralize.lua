@@ -57,7 +57,7 @@ local function pnext()
     return {type = "pattern", kind = "pnext"}
 end
 
-local function is_pnext()
+local function is_pnext(t)
     return t.kind == "pnext"
 end
 
