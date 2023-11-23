@@ -144,7 +144,6 @@ local function match(pattern, data)
                 for i = 1, 1 + #data - #pattern.table do
                     local p = to_linear(pattern.table)
                     local d = {unpack(data, i, i + #pattern.table)}
-                    -- TODO maybe need to return false if EVERY match_exact returns false
                     match_exact(match, p, d)
                 end
             else
