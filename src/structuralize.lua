@@ -29,12 +29,12 @@ local function is_wild(t)
     return t.kind == "wild"
 end
 
-local function exact_table(t)
-    return {table = t, type = "pattern", kind = "exact_table"}
+local function exact(t)
+    return {table = t, type = "pattern", kind = "exact"}
 end
 
 local function is_exact(t) 
-    return t.kind == "exact_table"
+    return t.kind == "exact"
 end
 
 local function list_path(t)
@@ -246,7 +246,7 @@ assert(#o == 1)
 assert(#o[1] == 0)
 
 -- should match list
-r = match(exact_table{capture 'x', 2, capture 'y'}, {1, 2, 3})
+r = match(exact{capture 'x', 2, capture 'y'}, {1, 2, 3})
 o = r()
 assert(#o == 2)
 o = to_dict(o)
@@ -254,7 +254,7 @@ assert(o.x == 1)
 assert(o.y == 3)
 
 -- should match structure
-r = match(exact_table{x = capture 'x', y = 2, z = capture 'y'}, {x = 1, y = 2, z = 3})
+r = match(exact{x = capture 'x', y = 2, z = capture 'y'}, {x = 1, y = 2, z = 3})
 o = r()
 assert(#o == 2)
 o = to_dict(o)
@@ -262,7 +262,7 @@ assert(o.y == 3)
 assert(o.x == 1)
 
 -- should match table
-r = match(exact_table{x = capture 'x', y = 2, z = capture 'y', 4, 5, capture 'z'}, {x = 1, y = 2, z = 3, 4, 5, 6})
+r = match(exact{x = capture 'x', y = 2, z = capture 'y', 4, 5, capture 'z'}, {x = 1, y = 2, z = 3, 4, 5, 6})
 o = r()
 assert(#o == 3)
 o = to_dict(o)
@@ -271,7 +271,7 @@ assert(o.x == 1)
 assert(o.z == 6)
 
 -- should match list list
-r = match(exact_table{ exact_table{ capture 'x', capture 'y' }, capture 'z' }, { {1, 2}, 3 } )
+r = match(exact{ exact{ capture 'x', capture 'y' }, capture 'z' }, { {1, 2}, 3 } )
 o = r()
 assert(#o == 3)
 o = to_dict(o)
@@ -280,17 +280,17 @@ assert(o.x == 1)
 assert(o.z == 3)
 
 -- should fail from unequal list length 
-r = match(exact_table{ capture 'x', capture 'z' }, { 1, 2, 3 } )
+r = match(exact{ capture 'x', capture 'z' }, { 1, 2, 3 } )
 o = r()
 assert(not o)
 
 -- should fail from incompatbile structure
-r = match(exact_table{ x = 1, y = 2}, { x = 1, z = 2})
+r = match(exact{ x = 1, y = 2}, { x = 1, z = 2})
 o = r()
 assert(not o)
 
 -- should fail in deeply nested pattern
-r = match(exact_table{ 1, 2, exact_table{ 4, 5 }}, { 1, 2, { 4, 6 }})
+r = match(exact{ 1, 2, exact{ 4, 5 }}, { 1, 2, { 4, 6 }})
 o = r()
 assert(not o)
 
@@ -324,7 +324,7 @@ o = r()
 assert(o == nil)
 
 -- should match inner list path
-r = match(exact_table{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {10, 1, 20, 50, 1} })
+r = match(exact{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {10, 1, 20, 50, 1} })
 o = r()
 assert(#o == 2)
 o = to_dict(o)
@@ -353,7 +353,7 @@ o = r()
 assert(not o)
 
 -- should fail complete match when sub list path match completely fails
-r = match(exact_table{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {9, 9, 9, 9, 9} })
+r = match(exact{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {9, 9, 9, 9, 9} })
 o = r()
 assert(not o)
 
@@ -363,8 +363,8 @@ o = r()
 assert(not o)
 
 -- should match path
-r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
-              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact{capture 'a', capture 'b', 0, pnext(), pnext()}
               , capture 'i' 
               },
            { 1, {10, 20, 0, 30, 40}, 0, {100, 200, 0, 300, 400}, 2 })
@@ -410,8 +410,8 @@ assert(not o)
 
 
 -- should match path with failure cases
-r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
-              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact{capture 'a', capture 'b', 0, pnext(), pnext()}
               , capture 'i' 
               },
            { 1, {10, 20, 0, 30, 40}, 0, {100, 200, 9, 300, 400}, 2 })
@@ -438,8 +438,8 @@ o = r()
 assert(not o)
 
 -- should fail path 
-r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
-              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact{capture 'a', capture 'b', 0, pnext(), pnext()}
               , capture 'i' 
               },
            { 1, {10, 20, 0, 30, 40}, 9, {100, 200, 0, 300, 400}, 2 })
@@ -448,8 +448,8 @@ o = r()
 assert(not o)
 
 -- should match path in list path
-r = match(list_path{ path { exact_table{ pnext(), pnext() }, capture 'z' }, 
-                     path { exact_table{ pnext(), pnext() }, capture 'w' } 
+r = match(list_path{ path { exact{ pnext(), pnext() }, capture 'z' }, 
+                     path { exact{ pnext(), pnext() }, capture 'w' } 
                    },
          { { 1, 2 }, { 3, 4 }, { 5, 6 } })
 
@@ -508,7 +508,6 @@ assert(not o)
 r = match(path{ list_path{ pnext(), pnext() }, capture 'x' },
          { 1, 2, 3, 4, 5, 6 })
 
--- TODO exact_table => exact
 o = r()
 assert(#o == 1)
 o = to_dict(o)
@@ -561,5 +560,3 @@ assert(o.x == 6)
 
 o = r()
 assert(not o)
-
-print("ok")
