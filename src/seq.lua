@@ -1,4 +1,4 @@
--- Intended to work with lua 5.1
+-- Tested with lua 5.1
 
 local function map(self, f)
     assert(f ~= nil)

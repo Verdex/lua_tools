@@ -1,4 +1,4 @@
-
+-- Tested with lua 5.1
 
 local function pd(t, pad, assign) 
     pad = pad or 0
