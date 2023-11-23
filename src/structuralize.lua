@@ -70,19 +70,22 @@ local function match(pattern, data)
     assert(type(pattern) ~= "table" or pattern.type == "pattern")
     return coroutine.wrap(function() 
         if type(pattern) ~= "table" then
-            coroutine.yield({{pattern == data, data}})
+            if pattern == data then
+                coroutine.yield({{}})
+            else
+                return false
+            end
         elseif is_capture(pattern) then
             coroutine.yield({{pattern.name, data}})
         elseif is_wild(pattern) then
-            coroutine.yield({{true, data}})
+            coroutine.yield({{}})
         elseif is_exact(pattern) and type(data) == "table" then
             local lp = to_linear(pattern.table)
             local ld = to_linear(data)
             if #lp == #ld then
                 match_exact(match, lp, data)
             else 
-                -- TODO fail
-                error("todo fail case for exact")
+                return false
             end
         else 
             print(#pattern.table, #data)
@@ -109,69 +112,53 @@ assert(o[1][2] == 40)
 r = match(1, 1)
 o = r()
 assert(#o == 1)
-assert(o[1][1])
-assert(o[1][2] == 1)
+assert(#o[1] == 0)
 
 r = match(nil, nil)
 o = r()
 assert(#o == 1)
-assert(o[1][1])
-assert(o[1][2] == nil)
+assert(#o[1] == 0)
 
 r = match(false, false)
 o = r()
 assert(#o == 1)
-assert(o[1][1])
-assert(o[1][2] == false)
+assert(#o[1] == 0)
 
 r = match("xstring", "xstring")
 o = r()
 assert(#o == 1)
-assert(o[1][1])
-assert(o[1][2] == "xstring")
+assert(#o[1] == 0)
 
 -- should fail match: nil, boolean, number, string
 r = match(2, 1)
 o = r()
-assert(#o == 1)
-assert(not o[1][1])
-assert(o[1][2] == 1)
+assert(not o)
 
 r = match("", nil)
 o = r()
-assert(#o == 1)
-assert(not o[1][1])
-assert(o[1][2] == nil)
+assert(not o)
 
 r = match(true, false)
 o = r()
-assert(#o == 1)
-assert(not o[1][1])
-assert(o[1][2] == false)
+assert(not o)
 
 r = match("ystring", "xstring")
 o = r()
-assert(#o == 1)
-assert(not o[1][1])
-assert(o[1][2] == "xstring")
+assert(not o)
 
 -- should match wild
 r = match(wild(), { x = 1})
 o = r()
 assert(#o == 1)
-assert(o[1][1])
-assert(o[1][2].x == 1)
+assert(#o[1] == 0)
 
 -- should match list
 r = match(exact_table{capture 'x', 2, capture 'y'}, {1, 2, 3})
 o = r()
 assert(#o == 3)
-assert(o[1][1] == "y")
-assert(o[1][2] == 3)
-assert(o[2][1])
-assert(o[2][2] == 2)
-assert(o[3][1] == "x")
-assert(o[3][2] == 1)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 3)
 
 -- should match structure
 r = match(exact_table{x = capture 'x', y = 2, z = capture 'y'}, {x = 1, y = 2, z = 3})
@@ -191,7 +178,20 @@ assert(o.x == 1)
 assert(o.z == 6)
 
 -- should match list list
+r = match(exact_table{ exact_table{ capture 'x', capture 'y' }, capture 'z' }, { {1, 2}, 3 } )
+o = r()
+assert(#o == 3)
+o = to_dict(o)
+assert(o.y == 2)
+assert(o.x == 1)
+assert(o.z == 3)
 
+-- should fail from unequal list length 
+r = match(exact_table{ capture 'x', capture 'z' }, { 1, 2, 3 } )
+o = r()
+assert(not o)
+
+-- should fail from incompatbile structure
 
 -- should fail in deeply nested pattern
 
