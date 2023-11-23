@@ -1,4 +1,13 @@
 
+local function to_dict(t)
+    local ret = {}
+    for _, v in ipairs(t) do
+        if type(v[1]) == "string" then
+            ret[v[1]] = v[2]
+        end
+    end
+    return ret
+end
 
 local function capture(name)
     return {name = name, type = "pattern", kind = "capture"}
