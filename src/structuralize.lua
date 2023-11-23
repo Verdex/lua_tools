@@ -407,7 +407,103 @@ assert(o.i == 400)
 
 o = r()
 assert(not o)
--- should fail in one path but succeed in others (and then also when the failure is deeply nested)
+
+
+-- should match path with failure cases
+r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+              , capture 'i' 
+              },
+           { 1, {10, 20, 0, 30, 40}, 0, {100, 200, 9, 300, 400}, 2 })
+
+o = r()
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 10)
+assert(o.b == 20)
+assert(o.i == 30)
+
+o = r()
+assert(#o == 5)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+assert(o.a == 10)
+assert(o.b == 20)
+assert(o.i == 40)
+
+o = r()
+assert(not o)
+
+-- should fail path 
+r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+              , capture 'i' 
+              },
+           { 1, {10, 20, 0, 30, 40}, 9, {100, 200, 0, 300, 400}, 2 })
+
+o = r()
+assert(not o)
+
+-- should match path in list path
+r = match(list_path{ path { exact_table{ pnext(), pnext() }, capture 'z' }, 
+                     path { exact_table{ pnext(), pnext() }, capture 'w' } 
+                   },
+         { { 1, 2 }, { 3, 4 }, { 5, 6 } })
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 1)
+assert(o.w == 3)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 1)
+assert(o.w == 4)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 2)
+assert(o.w == 3)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 2)
+assert(o.w == 4)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 3)
+assert(o.w == 5)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 3)
+assert(o.w == 6)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 4)
+assert(o.w == 5)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.z == 4)
+assert(o.w == 6)
+
+o = r()
+assert(not o)
+-- should match list path in path
 
 -- TODO exact_table => exact
 
