@@ -503,8 +503,63 @@ assert(o.w == 6)
 
 o = r()
 assert(not o)
+
 -- should match list path in path
+r = match(path{ list_path{ pnext(), pnext() }, capture 'x' },
+         { 1, 2, 3, 4, 5, 6 })
 
 -- TODO exact_table => exact
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 1)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 2)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 2)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 3)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 3)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 4)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 4)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 5)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 5)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.x == 6)
+
+o = r()
+assert(not o)
 
 print("ok")
