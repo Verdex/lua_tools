@@ -44,10 +44,14 @@ end
 local function merge(t1, t2)
     local r = {}
     for _, v in ipairs(t1) do
-        r[#r + 1] = v
+        if v[1] then
+            r[#r + 1] = v
+        end
     end
     for _, v in ipairs(t2) do
-        r[#r + 1] = v
+        if v[1] then
+            r[#r + 1] = v
+        end
     end
     return r
 end
@@ -109,9 +113,8 @@ local function match(pattern, data)
                 for i = 1, 1 + #data - #pattern.table do
                     local p = to_linear(pattern.table)
                     local d = {unpack(data, i, i + #pattern.table)}
-                    if not match_exact(match, p, d) then
-                        return false
-                    end
+                    -- TODO maybe need to return false if EVERY match_exact returns false
+                    match_exact(match, p, d)
                 end
             else
                 return false
@@ -121,9 +124,7 @@ local function match(pattern, data)
         end
 
         -- path
-        -- list path
-        -- and/or ?
-        -- matcher function ?
+        -- matcher function
     end)
 end
 
@@ -182,7 +183,7 @@ assert(#o[1] == 0)
 -- should match list
 r = match(exact_table{capture 'x', 2, capture 'y'}, {1, 2, 3})
 o = r()
-assert(#o == 3)
+assert(#o == 2)
 o = to_dict(o)
 assert(o.x == 1)
 assert(o.y == 3)
@@ -190,7 +191,7 @@ assert(o.y == 3)
 -- should match structure
 r = match(exact_table{x = capture 'x', y = 2, z = capture 'y'}, {x = 1, y = 2, z = 3})
 o = r()
-assert(#o == 3)
+assert(#o == 2)
 o = to_dict(o)
 assert(o.y == 3)
 assert(o.x == 1)
@@ -198,7 +199,7 @@ assert(o.x == 1)
 -- should match table
 r = match(exact_table{x = capture 'x', y = 2, z = capture 'y', 4, 5, capture 'z'}, {x = 1, y = 2, z = 3, 4, 5, 6})
 o = r()
-assert(#o == 6)
+assert(#o == 3)
 o = to_dict(o)
 assert(o.y == 3)
 assert(o.x == 1)
@@ -229,7 +230,6 @@ o = r()
 assert(not o)
 
 -- should match list path
-print("START")
 r = match(list_path{capture 'x', capture 'y'}, { 1, 2, 3, 4, 5})
 o = r()
 assert(#o == 2)
@@ -257,6 +257,28 @@ assert(o.y == 5)
 
 o = r()
 assert(o == nil)
+
+-- should match inner list path
+r = match(exact_table{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {10, 1, 20, 50, 1} })
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 10)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 5)
+assert(o.y == 10)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 5)
+assert(o.y == 10)
+
+
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
 print("ok")
