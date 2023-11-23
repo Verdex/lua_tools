@@ -60,16 +60,24 @@ local function product(cs, results)
 end
 --]]
 
-local function match_exact(ps, data, results)
+local function to_linear(t) 
+    local ret = {}
+    for k, v in pairs(t) do
+        ret[#ret+1] = { k, v }
+    end
+    return ret
+end
+
+local function match_exact(m, ps, data, results)
     results = results or {}
     if #ps == 0 then
         coroutine.yield(results)
     else
         local p = table.remove(ps)
-        local d = table.remove(data)
-        local c = match(p, d)
+        local d = data[p[1]]
+        local c = m(p[2], d)
         for output in c do
-            match_exact(ps, data, merge(results, output))
+            match_exact(m, ps, data, merge(results, output))
         end
     end
 end
@@ -83,9 +91,17 @@ local function match(pattern, data)
             coroutine.yield({{pattern.name, data}})
         elseif is_wild(pattern) then
             coroutine.yield({{true, data}})
-        elseif is_exact(pattern) and #pattern.table == #data then
-            match_exact(pattern.table, data)
+        elseif is_exact(pattern) and type(data) == "table" then
+            local lp = to_linear(pattern.table)
+            local ld = to_linear(data)
+            if #lp == #ld then
+                match_exact(match, lp, data)
+            else 
+                -- TODO fail
+                error("todo fail case for exact")
+            end
         else 
+            print(#pattern.table, #data)
             -- TODO failure
             error("Unrecognized pattern")
         end
@@ -164,12 +180,37 @@ assert(o[1][2].x == 1)
 
 -- should match list
 r = match(exact_table{capture 'x', 2, capture 'y'}, {1, 2, 3})
-
-
+o = r()
+assert(#o == 3)
+assert(o[1][1] == "y")
+assert(o[1][2] == 3)
+assert(o[2][1])
+assert(o[2][2] == 2)
+assert(o[3][1] == "x")
+assert(o[3][2] == 1)
 
 -- should match structure
+r = match(exact_table{x = capture 'x', y = 2, z = capture 'y'}, {x = 1, y = 2, z = 3})
+o = r()
+assert(#o == 3)
+o = to_dict(o)
+assert(o.y == 3)
+assert(o.x == 1)
 
 -- should match table
+r = match(exact_table{x = capture 'x', y = 2, z = capture 'y', 4, 5, capture 'z'}, {x = 1, y = 2, z = 3, 4, 5, 6})
+o = r()
+assert(#o == 6)
+o = to_dict(o)
+assert(o.y == 3)
+assert(o.x == 1)
+assert(o.z == 6)
 
+-- should match list list
+
+
+-- should fail in deeply nested pattern
+
+-- should fail in one path but succeed in others
 
 print("ok")
