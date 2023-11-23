@@ -1,8 +1,5 @@
 -- Tested with lua 5.1
 
--- TODO remove
-display = require 'display'
-
 local function to_dict(t)
     local ret = {}
     for _, v in ipairs(t) do
