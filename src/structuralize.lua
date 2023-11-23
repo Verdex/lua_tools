@@ -96,9 +96,7 @@ local function match(pattern, data)
                 return false
             end
         else 
-            print(#pattern.table, #data)
-            -- TODO failure
-            error("Unrecognized pattern")
+            return false
         end
 
         -- path
@@ -200,12 +198,15 @@ o = r()
 assert(not o)
 
 -- should fail from incompatbile structure
+r = match(exact_table{ x = 1, y = 2}, { x = 1, z = 2})
+o = r()
+assert(not o)
 
 -- should fail in deeply nested pattern
 r = match(exact_table{ 1, 2, exact_table{ 4, 5 }}, { 1, 2, { 4, 6 }})
 o = r()
 assert(not o)
 
--- should fail in one path but succeed in others
+-- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
 print("ok")
