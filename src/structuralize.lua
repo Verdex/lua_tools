@@ -285,6 +285,19 @@ o = to_dict(o)
 assert(o.x == 5)
 assert(o.y == 50)
 
+o = r()
+assert(not o)
+
+-- should fail complete match when sub list path match completely fails
+r = match(exact_table{ list_path{capture 'x', 0}, list_path{capture 'y', 1} }, { {1, 0, 2, 5, 0}, {9, 9, 9, 9, 9} })
+o = r()
+assert(not o)
+
+-- should fail list path when data list is too short
+r = match(list_path { capture 'x', 2, 3}, { 1 })
+o = r()
+assert(not o)
+
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
 print("ok")
