@@ -56,12 +56,18 @@ local function match_exact(m, ps, data, results)
     results = results or {}
     if #ps == 0 then
         coroutine.yield(results)
+        return true
     else
         local p = table.remove(ps)
         local d = data[p[1]]
         local c = m(p[2], d)
         for output in c do
-            match_exact(m, ps, data, merge(results, output))
+            if not output then 
+                return false
+            end
+            if not match_exact(m, ps, data, merge(results, output)) then
+                return false
+            end 
         end
     end
 end
@@ -83,7 +89,9 @@ local function match(pattern, data)
             local lp = to_linear(pattern.table)
             local ld = to_linear(data)
             if #lp == #ld then
-                match_exact(match, lp, data)
+                if not match_exact(match, lp, data) then
+                    return false
+                end
             else 
                 return false
             end
@@ -194,6 +202,9 @@ assert(not o)
 -- should fail from incompatbile structure
 
 -- should fail in deeply nested pattern
+r = match(exact_table{ 1, 2, exact_table{ 4, 5 }}, { 1, 2, { 4, 6 }})
+o = r()
+assert(not o)
 
 -- should fail in one path but succeed in others
 
