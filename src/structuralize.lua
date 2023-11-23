@@ -45,6 +45,22 @@ local function is_list_path(t)
     return t.kind == "list_path"
 end
 
+local function path(t) 
+    return {table = t, type = "pattern", kind = "path"}
+end
+
+local function is_path(t)
+    return t.kind == "path"
+end
+
+local function pnext()
+    return {type = "pattern", kind = "pnext"}
+end
+
+local function is_pnext()
+    return t.kind == "pnext"
+end
+
 local function merge(t1, t2)
     local r = {}
     for _, v in ipairs(t1) do
@@ -68,6 +84,21 @@ local function to_linear(t)
     return ret
 end
 
+local function split_pnext(t)
+    local ns = {}
+    local xs = {}
+    for k, v in ipairs(t) do
+        if type(v[1]) == "string" then
+            xs[#xs+1] = v
+        elseif is_pnext(v[1]) then
+            ns[#ns+1] = v
+        else
+            error("invalid split_pnext state")
+        end
+    end
+    return ns, xs
+end
+
 local function match_exact(m, ps, data, index, results)
     index = index or 1
     results = results or {}
@@ -85,6 +116,30 @@ local function match_exact(m, ps, data, index, results)
             if not match_exact(m, ps, data, index + 1, merge(results, output)) then
                 return false
             end 
+        end
+        return true
+    end
+end
+
+local function match_path(m, ps, data, index, results)
+    index = index or 1
+    results = results or {}
+    if index > #ps then
+        coroutine.yield(results)
+        return true
+    else
+        local p = ps[index]
+        local c = m(p, data)
+        for output in c do
+            if not output then
+                return false
+            end
+            local nexts, normal = split_pnext(output)
+            for _, v in ipairs(nexts) do
+                if not match_path(m, ps, v[2], index + 1, merge(results, normal)) then
+                    return false
+                end
+            end
         end
         return true
     end
@@ -124,12 +179,13 @@ local function match(pattern, data)
             else
                 return false
             end
+        elseif is_path(pattern) then
+            match_path(match, pattern.table, data)
+        elseif is_pnext(pattern) then
+            coroutine.yield({{pattern, data}})
         else 
             return false
         end
-
-        -- path
-        -- matcher function
     end)
 end
 
@@ -302,6 +358,19 @@ r = match(list_path { capture 'x', 2, 3}, { 1 })
 o = r()
 assert(not o)
 
+print"START"
+-- should match path
+r = match(path{ exact_table{capture 'x', pnext(), 0, pnext(), capture 'y'}
+              , exact_table{capture 'a', capture 'b', 0, pnext(), pnext()}
+              , capture 'i' 
+              },
+           { 1, {10, 20, 0, 30, 40}, 0, {100, 200, 0, 300, 400}, 2 })
+
+o = r()
+display.pp(o)
+
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
+
+-- TODO exact_table => exact
 
 print("ok")
