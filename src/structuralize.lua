@@ -64,20 +64,21 @@ local function to_linear(t)
     return ret
 end
 
-local function match_exact(m, ps, data, results)
+local function match_exact(m, ps, data, index, results)
+    index = index or 1
     results = results or {}
-    if #ps == 0 then
+    if index > #ps then
         coroutine.yield(results)
         return true
     else
-        local p = table.remove(ps)
+        local p = ps[index]
         local d = data[p[1]]
         local c = m(p[2], d)
         for output in c do
             if not output then 
                 return false
             end
-            if not match_exact(m, ps, data, merge(results, output)) then
+            if not match_exact(m, ps, data, index + 1, merge(results, output)) then
                 return false
             end 
         end
@@ -269,8 +270,8 @@ assert(o.y == 10)
 o = r()
 assert(#o == 2)
 o = to_dict(o)
-assert(o.x == 5)
-assert(o.y == 10)
+assert(o.x == 1)
+assert(o.y == 50)
 
 o = r()
 assert(#o == 2)
@@ -278,6 +279,11 @@ o = to_dict(o)
 assert(o.x == 5)
 assert(o.y == 10)
 
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 5)
+assert(o.y == 50)
 
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
