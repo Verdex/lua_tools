@@ -527,3 +527,13 @@ assert(o.x == 6)
 
 o = r()
 assert(not o)
+
+return { to_dict = to_dict
+       , capture = capture
+       , wild = wild
+       , pnext = pnext
+       , path = path
+       , list_path = list_path
+       , exact = exact
+       , match = match
+       }
