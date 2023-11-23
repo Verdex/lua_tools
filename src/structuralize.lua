@@ -26,7 +26,7 @@ local function is_wild(t)
 end
 
 local function exact_table(t)
-    return {table = table, type = "pattern", kind = "exact_table"}
+    return {table = t, type = "pattern", kind = "exact_table"}
 end
 
 local function is_exact(t) 
