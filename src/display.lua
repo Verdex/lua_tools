@@ -1,6 +1,6 @@
 
 
-local function pp(t, pad, assign) 
+local function pd(t, pad, assign) 
     pad = pad or 0
     if type(t) == "string" then
         -- TODO: include escapes?
@@ -19,9 +19,9 @@ local function pp(t, pad, assign)
         local r = {}
         for k, v in pairs(t) do
             if type(k) == "number" then
-                r[#r+1] = pp(v, pad + 1)
+                r[#r+1] = pd(v, pad + 1)
             else
-                r[#r+1] = pp(k, pad + 1) .. " = " .. pp(v, pad + 1, true)
+                r[#r+1] = pd(k, pad + 1) .. " = " .. pd(v, pad + 1, true)
             end
         end
         if #r == 0 then
@@ -36,6 +36,9 @@ local function pp(t, pad, assign)
     end
 end
 
+local function pp(t)
+    print(pd(t))
+end
 
 
-return { pp = pp }
+return { pp = pp, pd = pd }
