@@ -33,6 +33,14 @@ local function is_exact(t)
     return t.kind == "exact_table"
 end
 
+local function list_path(t)
+    return {table = t, type = "pattern", kind = "list_path"}
+end
+
+local function is_list_path(t) 
+    return t.kind == "list_path"
+end
+
 local function merge(t1, t2)
     local r = {}
     for _, v in ipairs(t1) do
@@ -69,6 +77,7 @@ local function match_exact(m, ps, data, results)
                 return false
             end 
         end
+        return true
     end
 end
 
@@ -93,6 +102,18 @@ local function match(pattern, data)
                     return false
                 end
             else 
+                return false
+            end
+        elseif is_list_path(pattern) and type(data) == "table" then
+            if #pattern.table <= #data then
+                for i = 1, 1 + #data - #pattern.table do
+                    local p = to_linear(pattern.table)
+                    local d = {unpack(data, i, i + #pattern.table)}
+                    if not match_exact(match, p, d) then
+                        return false
+                    end
+                end
+            else
                 return false
             end
         else 
@@ -207,6 +228,35 @@ r = match(exact_table{ 1, 2, exact_table{ 4, 5 }}, { 1, 2, { 4, 6 }})
 o = r()
 assert(not o)
 
+-- should match list path
+print("START")
+r = match(list_path{capture 'x', capture 'y'}, { 1, 2, 3, 4, 5})
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 1)
+assert(o.y == 2)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 2)
+assert(o.y == 3)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 3)
+assert(o.y == 4)
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.x == 4)
+assert(o.y == 5)
+
+o = r()
+assert(o == nil)
 -- should fail in one path but succeed in others (and then also when the failure is deeply nested)
 
 print("ok")
