@@ -44,22 +44,6 @@ local function merge(t1, t2)
     return r
 end
 
---[[
-local function product(cs, results) 
-    results = results or {}
-    if #cs ~= 0 then
-        local c = table.remove(cs)
-        for captures in c do
-            if #captures ~= 0 then 
-                product(cs, merge(results, captures))
-            end
-        end
-    else
-        coroutine.yield(results)
-    end
-end
---]]
-
 local function to_linear(t) 
     local ret = {}
     for k, v in pairs(t) do
