@@ -62,6 +62,42 @@ local function skip(self, num)
     return self
 end
 
+local function any(self, p)
+    assert(p ~= nil)
+
+    for i in self:iter() do
+        if p(i) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function all(self, p)
+    assert(p ~= nil)
+
+    for i in self:iter() do
+        if not p(i) then
+            return false 
+        end
+    end
+
+    return true 
+end
+
+local function none(self, p)
+    assert(p ~= nil)
+
+    for i in self:iter() do
+        if p(i) then
+            return false 
+        end
+    end
+
+    return true 
+end
+
 local function reduce(self, f, start)
     assert(f ~= nil and start ~= nil)
 
