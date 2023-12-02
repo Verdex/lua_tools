@@ -150,30 +150,27 @@ local function from_repeat(r)
     return create(c) 
 end
 
+local function from_iter(i)
+    assert(i ~= nil)
+
+    local c = coroutine.wrap(function () 
+        for ilet in i do 
+            coroutine.yield(ilet)
+        end
+    end)
+
+    return create(c) 
+end
+
+---[[
+
+
+
+--]]
+
 return { from_repeat = from_repeat
        , from_previous = from_previous
        , from_list = from_list
        , from_index = from_index
+       , from_iter = from_iter
        }
-
---[[
-local x = {11, 22, 33, 44, 55, 66, 77}
-
-local z = from_list(x)
-
-local output = z:map(function(y) return y + 1 end)
- :map(function(y) return y + 1 end)
- :map(function(y) return y + 1 end)
- :filter(function(y) return y % 2 == 0 end)
- :take(3)
- :skip(1)
- :eval()
-
-for _, v in ipairs(output) do
-    print(v)
-end
-
-output = from_previous(function(x) return x + 7 end, 8):take(100):reduce(function(a, b) return a + b end, 0)
-
-print(output)
---]]
