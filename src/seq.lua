@@ -130,6 +130,9 @@ local function create(c)
            , take = take
            , skip = skip
            , reduce = reduce
+           , none = none
+           , all = all
+           , any = any
            , eval = eval
            }
 end
@@ -262,6 +265,29 @@ assert(x[2] == 4)
 local x = from_list({1, 2, 3, 4, 5}):reduce(function(a, b) return a + b end, 1)
 assert(x == 16)
 
+-- should indicate none
+local x = from_index(function(i) return i end):filter(function(x) return x % 2 == 0 end):take(10):none(function(x) return x % 2 == 1 end)
+assert(x)
+
+-- should not indicate none
+local x = from_list({1, 3, 5, 6}):none(function(x) return x % 2 == 0 end)
+assert(not x)
+
+-- should indicate any
+local x = from_list({0, 0, 0, 1}):any(function(i) return i == 1 end)
+assert(x)
+
+-- should not indicate any
+local x = from_list({0, 0, 0, 0}):any(function(i) return i == 1 end)
+assert(not x)
+
+-- should indicate all 
+local x = from_index(function(i) return i end):filter(function(x) return x % 2 == 0 end):take(10):all(function(x) return x % 2 == 0 end)
+assert(x)
+
+-- should not indicate all 
+local x = from_list({1, 3, 5, 6}):all(function(x) return x % 2 == 1 end)
+assert(not x)
 --]]
 
 return { from_repeat = from_repeat
