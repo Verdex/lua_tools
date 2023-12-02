@@ -130,8 +130,8 @@ local function from_previous(f, start)
     local c = coroutine.wrap(function () 
         local prev = start
         while true do
-            prev = f(prev)
             coroutine.yield(prev)
+            prev = f(prev)
         end
     end)
 
@@ -164,7 +164,67 @@ end
 
 ---[[
 
+-- should repeat
+local x = from_repeat(1):take(5):eval()
+assert(#x == 5)
+assert(x[1] == 1)
+assert(x[2] == 1)
+assert(x[3] == 1)
+assert(x[4] == 1)
+assert(x[5] == 1)
 
+-- should index
+local x = from_index(function(i) return i end, 1):take(5):eval()
+assert(#x == 5)
+assert(x[1] == 1)
+assert(x[2] == 2)
+assert(x[3] == 3)
+assert(x[4] == 4)
+assert(x[5] == 5)
+
+-- should compute from previous
+local x = from_previous(function(i) return i + 1 end, 1):take(5):eval()
+assert(#x == 5)
+assert(x[1] == 1)
+assert(x[2] == 2)
+assert(x[3] == 3)
+assert(x[4] == 4)
+assert(x[5] == 5)
+
+-- should from_iter an iter of a from_list
+local x = from_iter(from_list({1, 2, 3, 4, 5}):iter()):eval()
+assert(#x == 5)
+assert(x[1] == 1)
+assert(x[2] == 2)
+assert(x[3] == 3)
+assert(x[4] == 4)
+assert(x[5] == 5)
+
+-- should map
+local x = from_list({1, 2, 3, 4, 5}):map(function(x) return x + 1 end):eval()
+assert(#x == 5)
+assert(x[1] == 2)
+assert(x[2] == 3)
+assert(x[3] == 4)
+assert(x[4] == 5)
+assert(x[5] == 6)
+
+-- should skip
+local x = from_list({1, 2, 3, 4, 5}):skip(2):eval()
+assert(#x == 3)
+assert(x[1] == 3)
+assert(x[2] == 4)
+assert(x[3] == 5)
+
+-- should filter
+local x = from_list({1, 2, 3, 4, 5}):filter(function(i) return i % 2 == 0 end):eval()
+assert(#x == 2)
+assert(x[1] == 2)
+assert(x[2] == 4)
+
+-- should reduce
+local x = from_list({1, 2, 3, 4, 5}):reduce(function(a, b) return a + b end, 1)
+assert(x == 16)
 
 --]]
 
