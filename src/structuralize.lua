@@ -559,6 +559,19 @@ r = match(exact{ capture 'a', template 'a'}, {1, 2})
 o = r()
 assert(not o)
 
+-- should match template
+
+-- template should work inside list path
+
+-- template should work inside path
+
+-- template variables should correctly transfer from list path to adjacent pattern in exact
+
+-- template variables should correctly transfer from path to adjacent pattern in exact
+
+-- template variables should match when captured value is a table
+
+
 --]]
 
 return { to_dict = to_dict
