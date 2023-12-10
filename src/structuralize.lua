@@ -111,9 +111,7 @@ local function match_path(m, ps, data, env, index, results)
                 coroutine.yield(merge(results, normal))
             else
                 for _, v in ipairs(nexts) do
-                    if not match_path(m, ps, v[2], env, index + 1, merge(results, normal)) then
-                        return false
-                    end
+                    match_path(m, ps, v[2], env, index + 1, merge(results, normal))
                 end
             end
         end
