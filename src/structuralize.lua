@@ -85,9 +85,7 @@ local function match_exact(m, ps, data, env, index, results)
             if not output then 
                 return false
             end
-            if not match_exact(m, ps, data, env, index + 1, merge(results, output)) then
-                return false
-            end 
+            match_exact(m, ps, data, env, index + 1, merge(results, output))
         end
         return true
     end
