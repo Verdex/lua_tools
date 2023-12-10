@@ -546,32 +546,38 @@ o = r()
 assert(not o)
 
 -- should fail match when template doesn't match
-do
-    r = match(exact{ capture 'a', template 'a'}, {1, 2})
+r = match(exact{ capture 'a', template 'a'}, {1, 2})
 
-    o = r()
-    assert(not o)
-end
+o = r()
+assert(not o)
 
 -- should fail match when template doesn't match
-do
-    r = match(exact{ capture 'a', template 'a'}, {1, 2})
+r = match(exact{ capture 'a', template 'a'}, {1, 2})
 
-    o = r()
-    assert(not o)
-end
+o = r()
+assert(not o)
 
 -- should match template
-do
-    r = match(exact{ capture 'a', template 'a'}, {1, 1})
+r = match(exact{ capture 'a', template 'a'}, {1, 1})
 
-    o = r()
-    assert(#o == 1)
+o = r()
+assert(#o == 1)
 
-    o = to_dict(o)
-    assert(o.a == 1)
-end
+o = to_dict(o)
+assert(o.a == 1)
+
 -- template should work inside list path
+r = match(list_path{capture 'a', 0, template 'a'}, {1, 0, 2, 0, 2, 3, 0, 3, 9, 9, 9})
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 3)
 
 -- template should work inside path
 
@@ -580,7 +586,23 @@ end
 -- template variables should correctly transfer from path to adjacent pattern in exact
 
 -- template variables should match when captured value is a table
+r = match( exact { capture 'a', template 'a' }, { { 1, 2, z = "a" }, { 1, 2, z = "a" } } )
 
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a[1] == 1)
+assert(o.a[2] == 2)
+assert(o.a.z == "a")
+
+-- multiple templates and captures should work
+r = match(exact { capture 'a', capture 'b', template 'b', template 'a'}, {1, 2, 2, 1})
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.a == 1)
+assert(o.b == 2)
 
 --]]
 
