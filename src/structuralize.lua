@@ -78,7 +78,7 @@ local function match_exact(m, ps, data, env, index, results)
     else
         local p = ps[index]
         local d = data[p[1]]
-        local c = m(p[2], d)
+        local c = m(p[2], d, env)
         for output in c do
             if not output then 
                 return false
@@ -99,7 +99,7 @@ local function match_path(m, ps, data, env, index, results)
         return true
     else
         local p = ps[index]
-        local c = m(p, data)
+        local c = m(p, data, env)
         for output in c do
             if not output then
                 return false
@@ -546,21 +546,31 @@ o = r()
 assert(not o)
 
 -- should fail match when template doesn't match
+do
+    r = match(exact{ capture 'a', template 'a'}, {1, 2})
 
-r = match(exact{ capture 'a', template 'a'}, {1, 2})
-
-o = r()
-assert(not o)
+    o = r()
+    assert(not o)
+end
 
 -- should fail match when template doesn't match
+do
+    r = match(exact{ capture 'a', template 'a'}, {1, 2})
 
-r = match(exact{ capture 'a', template 'a'}, {1, 2})
-
-o = r()
-assert(not o)
+    o = r()
+    assert(not o)
+end
 
 -- should match template
+do
+    r = match(exact{ capture 'a', template 'a'}, {1, 1})
 
+    o = r()
+    assert(#o == 1)
+
+    o = to_dict(o)
+    assert(o.a == 1)
+end
 -- template should work inside list path
 
 -- template should work inside path
