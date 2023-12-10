@@ -28,6 +28,9 @@ local function is_path(t) return t.kind == "path" end
 local function pnext() return {type = "pattern", kind = "pnext"} end
 local function is_pnext(t) return t.kind == "pnext" end
 
+local function template(name) return {name = name, type = "pattern", kind = "template"} end
+local function is_template(t) return t.kind == "template" end
+
 local function merge(t1, t2)
     local r = {}
     for _, v in ipairs(t1) do
@@ -54,8 +57,10 @@ end
 local function split_pnext(t)
     local ns = {}
     local xs = {}
-    for k, v in ipairs(t) do
-        if type(v[1]) == "string" then
+    for _, v in ipairs(t) do
+        if type(v[1]) == "nil" then
+            -- successful match, but no capture
+        elseif type(v[1]) == "string" then
             xs[#xs+1] = v
         elseif is_pnext(v[1]) then
             ns[#ns+1] = v
@@ -66,7 +71,7 @@ local function split_pnext(t)
     return ns, xs
 end
 
-local function match_exact(m, ps, data, index, results)
+local function match_exact(m, ps, data, env, index, results)
     index = index or 1
     results = results or {}
     if index > #ps then
@@ -75,20 +80,18 @@ local function match_exact(m, ps, data, index, results)
     else
         local p = ps[index]
         local d = data[p[1]]
-        local c = m(p[2], d)
+        local c = m(p[2], d, env)
         for output in c do
             if not output then 
                 return false
             end
-            if not match_exact(m, ps, data, index + 1, merge(results, output)) then
-                return false
-            end 
+            match_exact(m, ps, data, env, index + 1, merge(results, output))
         end
         return true
     end
 end
 
-local function match_path(m, ps, data, index, results)
+local function match_path(m, ps, data, env, index, results)
     index = index or 1
     results = results or {}
     if index > #ps then
@@ -96,7 +99,7 @@ local function match_path(m, ps, data, index, results)
         return true
     else
         local p = ps[index]
-        local c = m(p, data)
+        local c = m(p, data, env)
         for output in c do
             if not output then
                 return false
@@ -106,9 +109,7 @@ local function match_path(m, ps, data, index, results)
                 coroutine.yield(merge(results, normal))
             else
                 for _, v in ipairs(nexts) do
-                    if not match_path(m, ps, v[2], index + 1, merge(results, normal)) then
-                        return false
-                    end
+                    match_path(m, ps, v[2], env, index + 1, merge(results, normal))
                 end
             end
         end
@@ -116,8 +117,10 @@ local function match_path(m, ps, data, index, results)
     end
 end
 
-local function match(pattern, data)
+local function match(pattern, data, env)
     assert(type(pattern) ~= "table" or pattern.type == "pattern")
+    env = env or {}
+
     return coroutine.wrap(function() 
         if type(pattern) ~= "table" then
             if pattern == data then
@@ -126,6 +129,7 @@ local function match(pattern, data)
                 return false
             end
         elseif is_capture(pattern) then
+            env[pattern.name] = data
             coroutine.yield({{pattern.name, data}})
         elseif is_wild(pattern) then
             coroutine.yield({{}})
@@ -133,7 +137,7 @@ local function match(pattern, data)
             local lp = to_linear(pattern.table)
             local ld = to_linear(data)
             if #lp == #ld then
-                if not match_exact(match, lp, data) then
+                if not match_exact(match, lp, data, env) then
                     return false
                 end
             else 
@@ -144,22 +148,31 @@ local function match(pattern, data)
                 for i = 1, 1 + #data - #pattern.table do
                     local p = to_linear(pattern.table)
                     local d = {unpack(data, i, i + #pattern.table)}
-                    match_exact(match, p, d)
+                    match_exact(match, p, d, env)
                 end
             else
                 return false
             end
         elseif is_path(pattern) then
-            match_path(match, pattern.table, data)
+            match_path(match, pattern.table, data, env)
         elseif is_pnext(pattern) then
             coroutine.yield({{pattern, data}})
+        elseif is_template(pattern) then
+            local value = env[pattern.name]
+            if type(value) == "table" then
+                value = exact(value)
+            end
+            local res = match(value, data)
+            if res() then
+                coroutine.yield({{}})
+            else 
+                return false
+            end
         else 
             return false
         end
     end)
 end
-
----[[
 
 -- should capture
 r = match(capture 'x', 40)
@@ -375,6 +388,27 @@ assert(o.i == 400)
 o = r()
 assert(not o)
 
+-- should match path in path with some failure branches
+r = match( path { exact{ pnext(), pnext(), pnext() }, path { exact { pnext(), pnext() }, exact { capture 'a', 0 } } }, 
+    { { { 5, 0 }, { 6, 0 } }, { { 10, 1 }, { 11, 1 } }, { { 99, 0 }, { 88, 1 } } })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 5)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 6)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 99)
+
+o = r()
+assert(not o)
 
 -- should match path with failure cases
 r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
@@ -411,6 +445,24 @@ r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
               },
            { 1, {10, 20, 0, 30, 40}, 9, {100, 200, 0, 300, 400}, 2 })
 
+o = r()
+assert(not o)
+
+-- path should handle failure of one pnext branch
+r = match(path { exact{ 1, pnext(), pnext() }, exact {1, capture 'a'} }, { 1, { 2, 3 }, { 1, 2 } } )
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+-- should succeed with zero captures in path
+r = match(exact { path { exact { pnext(), pnext() }, 1 }, 0 }, { { 1, 1 }, 0 })
+o = r()
+assert(#o == 0)
+
+-- path should fail when all pnext fail
+r = match(exact { path { exact { pnext(), pnext() }, 1 }, 0 }, { { 2, 2 }, 0 })
 o = r()
 assert(not o)
 
@@ -527,6 +579,106 @@ assert(o.x == 6)
 
 o = r()
 assert(not o)
+
+-- should fail match when template doesn't match
+r = match(exact{ capture 'a', template 'a'}, {1, 2})
+
+o = r()
+assert(not o)
+
+-- should fail match when template doesn't match
+r = match(exact{ capture 'a', template 'a'}, {1, 2})
+
+o = r()
+assert(not o)
+
+-- should match template
+r = match(exact{ capture 'a', template 'a'}, {1, 1})
+
+o = r()
+assert(#o == 1)
+
+o = to_dict(o)
+assert(o.a == 1)
+
+-- template should work inside list path
+r = match(list_path{capture 'a', 0, template 'a'}, {1, 0, 2, 0, 2, 3, 0, 3, 9, 9, 9})
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 3)
+
+o = r()
+assert(not o)
+
+-- template should work inside path
+r = match(path { exact{ 1, pnext(), pnext() }, exact {capture 'a', template 'a' } }, { 1, { 2, 3 }, { 4, 4 } } )
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 4)
+
+-- template variables should correctly transfer from list path to adjacent pattern in exact
+r = match(exact{ list_path { capture 'a', capture 'b' }, exact { template 'b', template 'a' } },
+          { {1, 2, 3, 4}, {3, 2} })
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.a == 2)
+assert(o.b == 3)
+
+-- template variables should correctly transfer from path to adjacent pattern in exact
+r = match(exact{ path { exact { pnext(), pnext() }, capture 'a' }, template 'a' },
+          { {1, 2}, 2 })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+-- template variables should correctly transfer from path to adjacent list path in exact
+r = match(exact{ path { exact { pnext(), pnext() }, capture 'a' }, list_path { template 'a', template 'a' } },
+          { {1, 2}, { 1, 2, 2, 1, 1, 2 } })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 1)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+o = r()
+assert(not o)
+
+-- template variables should match when captured value is a table
+r = match( exact { capture 'a', template 'a' }, { { 1, 2, z = "a" }, { 1, 2, z = "a" } } )
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a[1] == 1)
+assert(o.a[2] == 2)
+assert(o.a.z == "a")
+
+-- multiple templates and captures should work
+r = match(exact { capture 'a', capture 'b', template 'b', template 'a'}, {1, 2, 2, 1})
+
+o = r()
+assert(#o == 2)
+o = to_dict(o)
+assert(o.a == 1)
+assert(o.b == 2)
 
 --]]
 
