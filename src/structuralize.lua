@@ -176,8 +176,6 @@ local function match(pattern, data, env)
     end)
 end
 
----[[
-
 -- should capture
 r = match(capture 'x', 40)
 o = r()
@@ -431,6 +429,24 @@ r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
 o = r()
 assert(not o)
 
+-- path should handle failure of one pnext branch
+r = match(path { exact{ 1, pnext(), pnext() }, exact {1, capture 'a'} }, { 1, { 2, 3 }, { 1, 2 } } )
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+-- should succeed with zero captures in path
+r = match(exact { path { exact { pnext(), pnext() }, 1 }, 0 }, { { 1, 1 }, 0 })
+o = r()
+assert(#o == 0)
+
+-- path should fail when all pnext fail
+r = match(exact { path { exact { pnext(), pnext() }, 1 }, 0 }, { { 2, 2 }, 0 })
+o = r()
+assert(not o)
+
 -- should match path in list path
 r = match(list_path{ path { exact{ pnext(), pnext() }, capture 'z' }, 
                      path { exact{ pnext(), pnext() }, capture 'w' } 
@@ -579,7 +595,16 @@ assert(#o == 1)
 o = to_dict(o)
 assert(o.a == 3)
 
+o = r()
+assert(not o)
+
 -- template should work inside path
+r = match(path { exact{ 1, pnext(), pnext() }, exact {capture 'a', template 'a' } }, { 1, { 2, 3 }, { 4, 4 } } )
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 4)
 
 -- template variables should correctly transfer from list path to adjacent pattern in exact
 
