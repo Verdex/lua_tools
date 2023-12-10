@@ -636,8 +636,30 @@ assert(o.a == 2)
 assert(o.b == 3)
 
 -- template variables should correctly transfer from path to adjacent pattern in exact
+r = match(exact{ path { exact { pnext(), pnext() }, capture 'a' }, template 'a' },
+          { {1, 2}, 2 })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
 
 -- template variables should correctly transfer from path to adjacent list path in exact
+r = match(exact{ path { exact { pnext(), pnext() }, capture 'a' }, list_path { template 'a', template 'a' } },
+          { {1, 2}, { 1, 2, 2, 1, 1, 2 } })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 1)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 2)
+
+o = r()
+assert(not o)
 
 -- template variables should match when captured value is a table
 r = match( exact { capture 'a', template 'a' }, { { 1, 2, z = "a" }, { 1, 2, z = "a" } } )
