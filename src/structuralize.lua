@@ -390,6 +390,27 @@ assert(o.i == 400)
 o = r()
 assert(not o)
 
+-- should match path in path with some failure branches
+r = match( path { exact{ pnext(), pnext(), pnext() }, path { exact { pnext(), pnext() }, exact { capture 'a', 0 } } }, 
+    { { { 5, 0 }, { 6, 0 } }, { { 10, 1 }, { 11, 1 } }, { { 99, 0 }, { 88, 1 } } })
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 5)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 6)
+
+o = r()
+assert(#o == 1)
+o = to_dict(o)
+assert(o.a == 99)
+
+o = r()
+assert(not o)
 
 -- should match path with failure cases
 r = match(path{ exact{capture 'x', pnext(), 0, pnext(), capture 'y'}
