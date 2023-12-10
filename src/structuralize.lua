@@ -162,7 +162,7 @@ local function match(pattern, data, env)
         elseif is_template(pattern) then
             local value = env[pattern.name]
             if type(value) == "table" then
-                value = exact(table)
+                value = exact(value)
             end
             local res = match(value, data)
             if res() then
