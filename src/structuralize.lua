@@ -57,8 +57,10 @@ end
 local function split_pnext(t)
     local ns = {}
     local xs = {}
-    for k, v in ipairs(t) do
-        if type(v[1]) == "string" then
+    for _, v in ipairs(t) do
+        if type(v[1]) == "nil" then
+            -- successful match, but no capture
+        elseif type(v[1]) == "string" then
             xs[#xs+1] = v
         elseif is_pnext(v[1]) then
             ns[#ns+1] = v
