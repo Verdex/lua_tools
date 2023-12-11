@@ -31,6 +31,9 @@ local function is_pnext(t) return t.kind == "pnext" end
 local function template(name) return {name = name, type = "pattern", kind = "template"} end
 local function is_template(t) return t.kind == "template" end
 
+local function match_with(f) return {f = f, type = "pattern", kind = "match_with"} end
+local function is_match_with(t) return t.kind == "match_with" end
+
 local function merge(t1, t2)
     local r = {}
     for _, v in ipairs(t1) do
@@ -166,6 +169,21 @@ local function match(pattern, data, env)
             if res() then
                 coroutine.yield({{}})
             else 
+                return false
+            end
+        elseif is_match_with(pattern) then
+            local result = pattern.f(data, env)
+            if type(result) == "table" and result.type == "pattern" then
+                local ms = match(result, data, env)
+                for m in ms do
+                    if not m then 
+                        return false
+                    end
+                    coroutine.yield(m)
+                end
+            elseif result then
+                coroutine.yield({{}})
+            else
                 return false
             end
         else 
@@ -748,6 +766,126 @@ do
     assert(o.b == 2)
 end
 
+do
+    -- match with should fail to match
+    local r = match( match_with(function() return false end), 10)
+    local o = r()
+    assert(not o)
+end
+
+do
+    -- match with should match
+    local r = match( match_with(function(data) return type(data) == "number" and data % 2 == 0 end), 12)
+    local o = r()
+    assert(#o == 1)
+end
+
+do
+    -- match with should be able to use env
+    local x = function(d, env)
+        return d + env.a == 10
+    end
+    local r = match( list_path{ capture 'a', match_with(x) }, { 5, 5, 7, 3, 10, 0 })
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 5)
+
+    o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 7)
+
+    o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 10)
+
+    o = r()
+    assert(not o)
+end
+
+do
+    -- match with should be able to return pattern
+    local x = function()
+        return exact { capture'a', 0 }
+    end
+    local r = match( match_with(x), {27, 0} )
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 27)
+end
+
+do
+    -- match with should be able to return pattern in list path with multiple captures
+    local x = function()
+        return exact { capture'a', capture 'b' }
+    end
+    local r = match( list_path{match_with(x)}, {{27, 0}, {1, 2}} )
+    local o = r()
+    assert(#o == 2)
+    o = to_dict(o)
+    assert(o.a == 27)
+    assert(o.b == 0)
+
+    local o = r()
+    assert(#o == 2)
+    o = to_dict(o)
+    assert(o.a == 1)
+    assert(o.b == 2)
+end
+
+do
+    -- match with should be able to return pattern that sometimes fails 
+    local x = function()
+        return exact { capture'a', 0 }
+    end
+    local r = match( list_path{match_with(x)}, {{27, 0}, {1, 2}} )
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 27)
+
+    local o = r()
+    assert(not o)
+end
+
+do
+    -- match with should be able to return pattern that uses template 
+    local x = function()
+        return template "a" 
+    end
+    local r = match( list_path{capture 'a', match_with(x)}, {27, 0, 1, 1} )
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 1)
+
+    local o = r()
+    assert(not o)
+end
+
+do
+    -- match with should be able to return pattern that uses list path 
+    local x = function()
+        return list_path { 1, capture 'a' }
+    end
+    local r = match( exact{0, match_with(x)}, {0, {1, 2, 1, 3}} )
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 2)
+
+    local o = r()
+    assert(#o == 1)
+    o = to_dict(o)
+    assert(o.a == 3)
+
+    local o = r()
+    assert(not o)
+end
+
 --]]
 
 return { to_dict = to_dict
@@ -757,5 +895,6 @@ return { to_dict = to_dict
        , path = path
        , list_path = list_path
        , exact = exact
+       , match_with = match_with
        , match = match
        }
