@@ -62,6 +62,12 @@ local function rotate2(self, radians)
     return self
 end
 
+local function unit2(self)
+    local m = self:mag()
+    self:scale(1/m)
+    return self
+end
+
 local vec2 = nil
 
 local function clone2(self)
@@ -86,6 +92,7 @@ vec2 = function(x, y)
            , dist_sq_raw = dist2_sq_raw
            , scale = scale2
            , rotate = rotate2
+           , unit = unit2
            , clone = clone2
            }
 end
