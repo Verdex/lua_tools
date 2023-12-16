@@ -1,49 +1,81 @@
 -- Tested with lua 5.1
 
-local vec2 = nil
-
 local function dot2(self, v2)
     assert(type(v2) == "table" and v2.type == "vec2")
     return (self.x * v2.x) + (self.y * v2.y)
 end
 
-local function mag(self)
-
+local function mag2(self)
+    return math.sqrt((self.x * self.x) + (self.y * self.y))
 end
 
-local function mag_sq(self)
-
-end
-
-local function add2(self, v2)
-    assert(type(v2) == "table" and v2.type == "vec2")
-    return vec2(self.x + v2.x, self.y + v2.y)
+local function mag2_sq(self)
+    return (self.x * self.x) + (self.y * self.y)
 end
 
 local function add2_mut(self, v2)
+    assert(type(v2) == "table" and v2.type == "vec2")
+    self.x = self.x + v2.x
+    self.y = self.y + v2.y
+    return self
 end
 
 local function add2_raw(self, x, y)
+    self.x = self.x + x
+    self.y = self.y + y
+    return self
 end
 
 local function dist2(self, v2)
+    assert(type(v2) == "table" and v2.type == "vec2")
+    local x = v2.x - self.x
+    local y = v2.y - self.y
+    return math.sqrt((x * x) + (y * y))
 end
 
 local function dist2_sq(self, v2)
+    assert(type(v2) == "table" and v2.type == "vec2")
+    local x = v2.x - self.x
+    local y = v2.y - self.y
+    return (x * x) + (y * y)
 end
 
 local function dist2_sq_raw(self, x, y)
+    local tx = x - self.x
+    local ty = y - self.y
+    return (tx * tx) + (ty * ty)
 end
--- transform (probably shift and scale)
 
+local function scale2(self, s)
+    self.x = self.x * s
+    self.y = self.y * s
+    return self
+end
 
-vec2 = function (x, y)
+local function rotate2(self, radians)
+    local x = self.x
+    local y = self.y
+
+    self.x = (x * math.cos(radians)) - (y * math.sin(radians))
+    self.y = (x * math.sin(radians)) + (y * math.cos(radians))
+
+    return self
+end
+
+local vec2 = nil
+
+local function clone2(self)
+    return vec2(self.x, self.y)
+end
+
+vec2 = function(x, y)
     assert(type(x) == "number")
     assert(type(y) == "number")
 
     return { type = "vec2"
            , x = x
            , y = y
+           , clone = clone2
            , dot = dot2
            , add = add2
            }
@@ -51,11 +83,6 @@ end
 
 ---[[
 do
-    local v1 = vec2(1, 2)
-    local v2 = vec2(3, 4)
-    local v3 = v1:add(v2)
-    assert(v3.x == 4)
-    assert(v3.y == 6)
 end
 --]]
 
