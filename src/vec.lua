@@ -1,5 +1,7 @@
 -- Tested with lua 5.1
 
+-- 2D Vec
+
 local function dot2(self, v2)
     assert(type(v2) == "table" and v2.type == "vec2")
     return (self.x * v2.x) + (self.y * v2.y)
@@ -99,6 +101,77 @@ end
 
 ---[[
 do
+    -- should clone
+    local v = vec2(1, 2)
+    local c = v:clone()
+    assert(v.x == c.x)
+    assert(v.y == c.y)
+    c.x = 0
+    c.y = 0
+    assert(v.x == 1)
+    assert(v.y == 2)
+end
+
+do
+    -- should calculate dot product 
+    local v1 = vec2(2, 3)
+    local v2 = vec2(5, 7)
+    local o = v1:dot(v2)
+    assert(o == 31)
+end
+
+do
+    -- should calculate magnitude
+    local v = vec2(1, 1)
+    local o = v:mag()
+    assert(o == math.sqrt(2))
+end
+
+do
+    -- should calculate magnitude squared
+    local v = vec2(1, 1)
+    local o = v:mag_sq()
+    assert(o == 2)
+end
+
+do 
+    -- should add
+    local v1 = vec2(1, 2)
+    local v2 = vec2(3, 4)
+    local o = v1:add(v2)
+    assert(o.x == 4)
+    assert(o.y == 6)
+end
+
+do 
+    -- should add raw
+    local v1 = vec2(1, 2)
+    local o = v1:add_raw(3, 4)
+    assert(o.x == 4)
+    assert(o.y == 6)
+end
+
+do
+    -- should calculate distance
+    local v1 = vec2(1, 1)
+    local v2 = vec2(1, 3)
+    local o = v1:dist(v2)
+    assert(o == 2)
+end
+
+do
+    -- should calculate distance squared
+    local v1 = vec2(1, 1)
+    local v2 = vec2(1, 3)
+    local o = v1:dist_sq(v2)
+    assert(o == 4)
+end
+
+do
+    -- should calculate distance squared raw
+    local v1 = vec2(1, 1)
+    local o = v1:dist_sq_raw(1, 3)
+    assert(o == 4)
 end
 --]]
 
