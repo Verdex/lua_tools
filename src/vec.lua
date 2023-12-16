@@ -13,7 +13,7 @@ local function mag2_sq(self)
     return (self.x * self.x) + (self.y * self.y)
 end
 
-local function add2_mut(self, v2)
+local function add2(self, v2)
     assert(type(v2) == "table" and v2.type == "vec2")
     self.x = self.x + v2.x
     self.y = self.y + v2.y
@@ -75,9 +75,18 @@ vec2 = function(x, y)
     return { type = "vec2"
            , x = x
            , y = y
-           , clone = clone2
            , dot = dot2
+           , mag = mag2
+           , mag_sq = mag2_sq
            , add = add2
+           , add_raw = add2_raw
+           , dot = dot2
+           , dist = dist2 
+           , dist_sq = dist2_sq
+           , dist_sq_raw = dist2_sq_raw
+           , scale = scale2
+           , rotate = rotate2
+           , clone = clone2
            }
 end
 
