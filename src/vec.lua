@@ -173,6 +173,32 @@ do
     local o = v1:dist_sq_raw(1, 3)
     assert(o == 4)
 end
+
+do 
+    -- should scale
+    local v1 = vec2(1, 1)
+    local o = v1:scale(2)
+    assert(o.x == 2)
+    assert(o.y == 2)
+end
+
+do
+    -- should rotate
+    local v1 = vec2(1, 0)
+    local o = v1:rotate(math.pi / 2)
+    assert(o.x < 0.0001)
+    assert(o.y == 1)
+end
+
+do
+    -- should create unit vector
+    local v1 = vec2(1, 1)
+    local o = v1:unit()
+    assert(math.abs(o:mag() - 1) < 0.0001)
+    local c = vec2(1, 1) -- note: v1 has been mutated
+    local angle = math.acos(o:dot(c) / (o:mag() * c:mag()))
+    assert(angle == 0)
+end
 --]]
 
 return { vec2 = vec2
